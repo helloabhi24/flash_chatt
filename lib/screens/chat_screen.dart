@@ -40,13 +40,13 @@ class _ChatScreenState extends State<ChatScreen> {
   //     print(message.data());
   //   }
   // }
-  void getMessagesFromStream() async {
-    await for (var snapshot in _fireStore.collection('messages').snapshots()) {
-      for (var message in snapshot.docs) {
-        print(message.data());
-      }
-    }
-  }
+  // void getMessagesFromStream() async {
+  //   await for (var snapshot in _fireStore.collection('messages').snapshots()) {
+  //     for (var message in snapshot.docs) {
+  //       print(message.data());
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +57,8 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
               icon: Icon(Icons.close),
               onPressed: () {
-                // _auth.signOut();
-                // Navigator.pop(context);
-                getMessagesFromStream();
+                _auth.signOut();
+                Navigator.pop(context);
               }),
         ],
         title: Text('⚡️Chat'),
@@ -70,6 +69,29 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            StreamBuilder<QuerySnapshot>(
+                stream: _fireStore.collection('messages').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        backgroundColor: Colors.lightBlueAccent,
+                      ),
+                    );
+                  }
+                  final messages = snapshot.data.docs;
+                  List<Text> messageWidgets = [];
+                  for (var message in messages) {
+                    final messageText = message.data()['text'];
+                    final messageSender = message.data()['sender'];
+                    final messageWidget =
+                        Text('$messageText from $messageSender');
+                    messageWidgets.add(messageWidget);
+                  }
+                  return Column(
+                    children: messageWidgets,
+                  );
+                }),
             Container(
               decoration: kMessageContainerDecoration,
               child: Row(
