@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flash_chatt/constants.dart';
 
 final _fireStore = FirebaseFirestore.instance;
+String loggedInUser;
 
 class ChatScreen extends StatefulWidget {
   static const String id = 'chat_screen';
@@ -16,7 +17,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final messageEditingController = TextEditingController();
   final _auth = FirebaseAuth.instance;
 
-  String loggedInUser;
   String message;
   @override
   void initState() {
@@ -126,9 +126,12 @@ class MessageStream extends StatelessWidget {
           for (var message in messages) {
             final messageText = message.data()['text'];
             final messageSender = message.data()['sender'];
+            final currentUser = loggedInUser;
+
             final messageWidget = MessageBubble(
               sender: messageSender,
               text: messageText,
+              isMe: currentUser == messageSender,
             );
             messageWidgets.add(messageWidget);
           }
@@ -142,15 +145,17 @@ class MessageStream extends StatelessWidget {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({this.sender, this.text});
+  MessageBubble({this.sender, this.text, this.isMe});
   final String text;
   final String sender;
+  final bool isMe;
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(10.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Text('$sender',
               style: TextStyle(
@@ -158,14 +163,23 @@ class MessageBubble extends StatelessWidget {
                 color: Colors.black54,
               )),
           Material(
-            borderRadius: BorderRadius.circular(30),
-            color: Colors.blue[300],
+            borderRadius: isMe
+                ? BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30))
+                : BorderRadius.only(
+                    topRight: Radius.circular(30),
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30)),
+            elevation: 5.0,
+            color: isMe ? Colors.blue[300] : Colors.white,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 13, vertical: 15),
               child: Text('$text',
                   style: TextStyle(
                     fontSize: 15.0,
-                    color: Colors.white,
+                    color: isMe ? Colors.white : Colors.black54,
                   )),
             ),
           ),
